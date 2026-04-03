@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel – CAD M CAD B</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #2d6a4f; --orange: #e07c24; --cream: #fdfaf5;
+      --dark: #1a1a1a; --border: #e0d8cc; --bg: #f4f1ec;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--dark); }
+    .admin-header {
+      background: var(--green); color: white; padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .admin-header h1 { font-size: 1.1rem; font-weight: 700; }
+    .admin-header small { font-size: 0.75rem; opacity: 0.75; }
+    .back-link { color: rgba(255,255,255,0.85); font-size: 0.85rem; text-decoration: none; }
+    .back-link:hover { color: white; }
+    .admin-body { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border); padding-bottom: 0; }
+    .tab {
+      padding: 0.7rem 1.5rem; cursor: pointer; font-size: 0.88rem; font-weight: 600;
+      border-radius: 8px 8px 0 0; color: #666; border: none; background: none; margin-bottom: -2px;
+    }
+    .tab.active { background: var(--green); color: white; border-bottom: 2px solid var(--green); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .panel-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.2rem; color: var(--dark); }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+    th { background: var(--green); color: white; padding: 0.75rem 1rem; text-align: left; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+    td { padding: 0.7rem 1rem; font-size: 0.85rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #fafaf8; }
+    .badge {
+      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 100px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .badge-pending { background: #fff3cd; color: #856404; }
+    .badge-confirmed { background: #d1e7dd; color: #0a3622; }
+    .badge-cancelled { background: #f8d7da; color: #842029; }
+    .action-btn {
+      padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; border: none; margin-right: 4px; transition: 0.2s;
+    }
+    .btn-confirm { background: #d1e7dd; color: #0a3622; }
+    .btn-confirm:hover { background: #a3cfbb; }
+    .btn-delete { background: #f8d7da; color: #842029; }
+    .btn-delete:hover { background: #f1aeb5; }
+    .refresh-btn {
+      padding: 0.5rem 1.2rem; background: var(--orange); color: white;
+      border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; margin-bottom: 1rem;
+    }
+    .stats-row { display: flex; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .stat-box {
+      background: white; border-radius: 10px; padding: 1.2rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); min-width: 140px; text-align: center;
+    }
+    .stat-box .num { font-size: 2rem; font-weight: 700; color: var(--green); }
+    .stat-box .lbl { font-size: 0.78rem; color: #666; margin-top: 0.2rem; }
+    #loginOverlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center; z-index: 999;
+    }
+    .login-box {
+      background: white; border-radius: 16px; padding: 2.5rem;
+      width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .login-box h2 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--dark); }
+    .login-box p { font-size: 0.82rem; color: #888; margin-bottom: 1.5rem; }
+    .login-input {
+      width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border);
+      border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.88rem;
+      outline: none; margin-bottom: 0.75rem;
+    }
+    .login-input:focus { border-color: var(--green); }
+    .login-btn {
+      width: 100%; padding: 0.85rem; background: var(--green); color: white;
+      border: none; border-radius: 8px; font-size: 0.92rem; font-weight: 600;
+      cursor: pointer;
+    }
+    #loginError { color: #c0392b; font-size: 0.82rem; margin-top: 0.5rem; }
+    .loading { text-align: center; padding: 2rem; color: #888; }
+    .empty { text-align: center; padding: 2rem; color: #aaa; font-size: 0.9rem; }
+    @media (max-width: 600px) {
+      table { font-size: 0.78rem; }
+      th, td { padding: 0.5rem 0.6rem; }
+      .tabs { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+  <div class="login-box">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🌿</div>
+    <h2>Admin Login</h2>
+    <p>CAD M CAD B – Younger's Hunger</p>
+    <input type="text" class="login-input" id="loginUser" placeholder="Username" autocomplete="username"/>
+    <input type="password" class="login-input" id="loginPass" placeholder="Password" autocomplete="current-password"/>
+    <button class="login-btn" onclick="doLogin()">Login →</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<div class="admin-header">
+  <div>
+    <h1>🌿 CAD M CAD B – Admin Panel</h1>
+    <small>Manage reservations, contacts and menu</small>
+  </div>
+  <a href="/" class="back-link">← Back to Website</a>
+</div>
+
+<div class="admin-body">
+  <div class="stats-row" id="statsRow">
+    <div class="stat-box"><div class="num" id="totalRes">–</div><div class="lbl">Total Reservations</div></div>
+    <div class="stat-box"><div class="num" id="pendingRes">–</div><div class="lbl">Pending</div></div>
+    <div class="stat-box"><div class="num" id="confirmedRes">–</div><div class="lbl">Confirmed</div></div>
+    <div class="stat-box"><div class="num" id="totalContacts">–</div><div class="lbl">Contact Messages</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('reservations')">📅 Reservations</button>
+    <button class="tab" onclick="showTab('contacts')">✉️ Messages</button>
+  </div>
+
+  <!-- Reservations Tab -->
+  <div class="panel active" id="panel-reservations">
+    <div class="panel-title">Table Reservations</div>
+    <button class="refresh-btn" onclick="loadReservations()">🔄 Refresh</button>
+    <div id="reservationsTable"><div class="loading">Loading...</div></div>
+  </div>
+
+  <!-- Contacts Tab -->
+  <div class="panel" id="panel-contacts">
+    <div class="panel-title">Contact Messages</div>
+    <button class="refresh-btn" onclick="loadContacts()">🔄 Refresh</button>
+    <div id="contactsTable"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<script>
+  let credentials = '';
+
+  function doLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    if (!user || !pass) { document.getElementById('loginError').textContent = 'Please enter credentials.'; return; }
+    credentials = btoa(user + ':' + pass);
+    fetch('/api/admin/reservations', { headers: { 'Authorization': 'Basic ' + credentials } })
+      .then(r => {
+        if (r.ok) {
+          document.getElementById('loginOverlay').style.display = 'none';
+          loadAll();
+        } else {
+          document.getElementById('loginError').textContent = 'Invalid credentials.';
+          credentials = '';
+        }
+      })
+      .catch(() => { document.getElementById('loginError').textContent = 'Server error.'; });
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('loginOverlay').style.display !== 'none') doLogin();
+  });
+
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === ['reservations','contacts'].indexOf(name)));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  async function apiFetch(url, opts) {
+    return fetch(url, { headers: { 'Authorization': 'Basic ' + credentials, 'Content-Type': 'application/json' }, ...opts });
+  }
+
+  async function loadAll() { await Promise.all([loadReservations(), loadContacts()]); }
+
+  async function loadReservations() {
+    const el = document.getElementById('reservationsTable');
+    el.innerHTML = '<div class="loading">Loading...</div>';
+    const r = await apiFetch('/api/admin/reservations');
+    const data = await r.json();
+    document.getElementById('totalRes').textContent = data.length;
+    document.getElementById('pendingRes').textContent = data.filter(d => d.status === 'pending').length;
+    document.getElementById('confirmedRes').textContent = data.filter(d => d.status === 'confirmed').length;
+    if (!data.length) { el.innerHTML = '<div class="empty">No reservations yet.</div>'; return; }
+    el.innerHTML = `<table><thead><tr>
+      <th>Name</th><th>Phone</th><th>Guests</th><th>Date</th><th>Time</th><th>Note</th><th>Status</th><th>Actions</th>
+    </tr></thead><tbody>
+    ${data.map(r => `<tr id="row-${r.id}">
+      <td>${r.name}</td>
+      <td><a href="tel:+91${r.phone}" style="color:#2d6a4f">+91 ${r.phone}</a></td>
+      <td>${r.guests}</td><td>${r.date}</td><td>${r.time}</td>
+      <td>${r.note || '–'}</td>
+      <td><span class="badge badge-${r.status}">${r.status}</span></td>
+      <td>
+        <button class="action-btn btn-confirm" onclick="confirmRes('${r.id}')">✓ Confirm</button>
+        <button class="action-btn btn-delete" onclick="deleteRes('${r.id}')">✕ Delete</button>
+      </td>
+    </tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  async function loadContacts() {
+    const el = document.getElementById('contactsTable');
+    el.innerHTML = '<div class="loading">Loading...</div>';
+    const r = await apiFetch('/api/admin/contacts');
+    const data = await r.json();
+    document.getElementById('totalContacts').textContent = data.length;
+    if (!data.length) { el.innerHTML = '<div class="empty">No messages yet.</div>'; return; }
+    el.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Message</th><th>Date</th></tr></thead><tbody>
+    ${data.map(c => `<tr>
+      <td>${c.name}</td>
+      <td><a href="tel:+91${c.phone}" style="color:#2d6a4f">+91 ${c.phone}</a></td>
+      <td>${c.email || '–'}</td><td>${c.message || '–'}</td>
+      <td>${new Date(c.createdAt).toLocaleDateString('en-IN')}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  async function confirmRes(id) {
+    await apiFetch(`/api/admin/reservations/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'confirmed' }) });
+    loadReservations();
+  }
+
+  async function deleteRes(id) {
+    if (!confirm('Delete this reservation?')) return;
+    await apiFetch(`/api/admin/reservations/${id}`, { method: 'DELETE' });
+    loadReservations();
+  }
+</script>
+</body>
+</html>
